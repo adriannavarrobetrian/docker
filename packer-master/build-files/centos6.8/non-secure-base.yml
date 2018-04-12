@@ -1,0 +1,69 @@
+{
+  "provisioners": [
+    {
+      "type": "file",
+      "source": "/etc/ansible/rpm/ansible-2.0.2.0-1.el6.noarch.rpm",
+      "destination": "/tmp/ansible-2.0.2.0-1.el6.noarch.rpm"
+    },
+    {
+      "type": "shell",
+      "execute_command": "echo 'vagrant' | {{.Vars}} sudo -S -E bash '{{.Path}}'",
+      "script": "/etc/packer/scripts/general/ansible-provision.sh"
+    },
+    {
+      "type": "file",
+      "source": "/etc/ansible/pass/.vault_pass",
+      "destination": "/etc/ansible/pass/.vault_pass"
+    },
+    {
+      "type": "ansible-local",
+      "playbook_file": "/etc/ansible/plays/ami-creation/non-secure-base-ami.yml",
+      "extra_arguments": [ "--vault-password-file=/etc/ansible/pass/.vault_pass" ],
+      "role_paths": [
+        "/etc/ansible/roles/nfs-client",
+        "/etc/ansible/roles/common",
+        "/etc/ansible/roles/glp-repo",
+	"/etc/ansible/roles/zabbix-agent",
+	"/etc/ansible/roles/java-8",
+        "/etc/ansible/roles/ssh-config",
+        "/etc/ansible/roles/ssh-users",
+	"/etc/ansible/roles/glp-repo",
+        "/etc/ansible/roles/postfix",
+        "/etc/ansible/roles/ansible-client-prep",
+        "/etc/ansible/roles/disable-iptables",
+        "/etc/ansible/roles/disable-selinux"
+      ]
+    },
+    {
+      "type": "shell",
+      "execute_command": "echo 'vagrant' | {{.Vars}} sudo -S -E bash '{{.Path}}'",
+      "script": "/etc/packer/scripts/general/ansible-cleanup.sh"
+    }
+  ],
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "region": "eu-west-1",
+      "source_ami": "ami-30480d43",
+      "instance_type": "t2.micro",
+      "ssh_username": "root",
+      "ami_name": "glp-non-secure-centos-6.8",
+      "subnet_id": "subnet-1c066578",
+      "vpc_id": "vpc-a2719cc6",
+      "security_group_id": "sg-1afc807d",
+      "communicator": "ssh",
+      "ssh_pty": "true",
+      "force_deregister": "true",
+      "tags": { 
+        "Name": "glp-non-secure-centos-6.8"
+      },
+      "ami_block_device_mappings": [
+        {
+          "device_name": "/dev/sda1",
+          "delete_on_termination": "true",
+          "volume_size": "8" 
+        } 
+      ]
+    }
+  ]
+}
